@@ -50,7 +50,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto border-t border-slate-100 mt-10 pt-6 text-center text-slate-400">
-        © {new Date().getFullYear()} Babyblu Inc. All rights reserved. Made with ❤️ for happy babies.
+        © 2026 Babyblu Inc. All rights reserved. Made with ❤️ for happy babies.
       </div>
     </footer>
   );
