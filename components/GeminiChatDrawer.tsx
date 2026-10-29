@@ -22,10 +22,16 @@ const SUGGESTED_QUESTIONS = [
   '🪥 Toothbrush for 8-month baby',
 ];
 
+const PROACTIVE_NUDGE_OPTIONS = [
+  { label: '✨ Need product recommendations', query: 'Can you recommend the best essentials for my baby?' },
+  { label: '🩺 Are Babyblu items 100% safe?', query: 'Are all your products non-toxic and pediatrician tested?' },
+  { label: '🌿 Looking for purest baby wipes', query: 'Which wipes are best for newborn sensitive skin?' },
+];
+
 function parseReplyText(rawText: string): string {
   if (!rawText) return '';
   let text = rawText.trim();
-  
+
   if (text.startsWith('{')) {
     try {
       const parsed = JSON.parse(text);
@@ -40,7 +46,6 @@ function parseReplyText(rawText: string): string {
   return text.replace(/^"|"$/g, '');
 }
 
-// Formats **text** into styled bold elements
 function renderFormattedMessage(rawText: string) {
   const cleaned = parseReplyText(rawText);
   const parts = cleaned.split(/(\*\*[^*]+\*\*)/g);
@@ -60,6 +65,12 @@ function renderFormattedMessage(rawText: string) {
 export default function GeminiChatDrawer({ products }: GeminiChatDrawerProps) {
   const { addToCart } = useCart();
   const [isOpen, setIsOpen] = useState(false);
+  const [showNudge, setShowNudge] = useState(false);
+
+  // Track section visit state to prevent prompt from reappearing until user leaves and returns
+  const dismissedForCurrentVisit = useRef(false);
+  const wasInProductSection = useRef(false);
+
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: 'ai',
@@ -71,11 +82,52 @@ export default function GeminiChatDrawer({ products }: GeminiChatDrawerProps) {
   const [addedIds, setAddedIds] = useState<Record<string, boolean>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Scroll Observer: Manages visit-level visibility logic for #products section
+  useEffect(() => {
+    const productsSection = document.getElementById('products');
+    if (!productsSection) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const isVisible = entry.isIntersecting;
+
+        if (isVisible) {
+          // Entered or currently inside products section
+          if (!wasInProductSection.current) {
+            // Fresh visit entering from outside
+            wasInProductSection.current = true;
+            dismissedForCurrentVisit.current = false;
+          }
+
+          // Show prompt only if not dismissed for this visit and chat drawer is closed
+          if (!dismissedForCurrentVisit.current && !isOpen) {
+            setShowNudge(true);
+          }
+        } else {
+          // Left products section completely
+          wasInProductSection.current = false;
+          dismissedForCurrentVisit.current = false;
+          setShowNudge(false);
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(productsSection);
+    return () => observer.disconnect();
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen) {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isOpen]);
+
+  const handleDismissNudge = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setShowNudge(false);
+    dismissedForCurrentVisit.current = true; // Stay hidden for the rest of this section visit
+  };
 
   const handleAddProduct = (product: ShopifyProduct) => {
     addToCart(product);
@@ -90,7 +142,7 @@ export default function GeminiChatDrawer({ products }: GeminiChatDrawerProps) {
     if (!query.trim() || loading) return;
 
     if (!textToSend) setInput('');
-    
+
     const updatedMessages: Message[] = [...messages, { sender: 'user', text: query }];
     setMessages(updatedMessages);
     setLoading(true);
@@ -101,7 +153,7 @@ export default function GeminiChatDrawer({ products }: GeminiChatDrawerProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: query,
-          messages: updatedMessages, // Pass full chat history for conversation memory
+          messages: updatedMessages,
           catalog: products,
         }),
       });
@@ -136,12 +188,73 @@ export default function GeminiChatDrawer({ products }: GeminiChatDrawerProps) {
     }
   };
 
+  const handleNudgeOptionClick = (query: string) => {
+    handleDismissNudge();
+    setIsOpen(true);
+    sendMessage(query);
+  };
+
   return (
     <>
-      {/* Assistant Button */}
+      {/* Proactive Nudge Card */}
+      <AnimatePresence>
+        {!isOpen && showNudge && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.9 }}
+            transition={{ duration: 0.3, ease: [0.21, 0.47, 0.32, 0.98] }}
+            className="fixed bottom-28 right-6 z-40 w-72 sm:w-80 bg-gradient-to-br from-sky-500 via-indigo-600 to-sky-600 p-4 rounded-3xl shadow-2xl text-white border border-white/30 backdrop-blur-xl"
+          >
+            {/* Close / Dismiss Nudge */}
+            <button
+              onClick={handleDismissNudge}
+              className="absolute top-3 right-3 w-6 h-6 rounded-full bg-black/20 hover:bg-black/40 text-white/80 hover:text-white text-xs flex items-center justify-center transition-colors cursor-pointer"
+              aria-label="Close prompt"
+            >
+              ✕
+            </button>
+
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span className="text-[11px] font-black uppercase tracking-wider text-sky-100">
+                Babyblu AI Concierge
+              </span>
+            </div>
+
+            <h4 className="text-sm font-extrabold leading-snug mb-3 pr-4">
+              Have doubts or looking for recommendations? 🍼
+            </h4>
+
+            <div className="space-y-1.5">
+              {PROACTIVE_NUDGE_OPTIONS.map((opt, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleNudgeOptionClick(opt.query)}
+                  className="w-full text-left text-xs font-bold bg-white/15 hover:bg-white/25 active:scale-98 border border-white/20 rounded-2xl px-3.5 py-2 transition-all cursor-pointer flex items-center justify-between group"
+                >
+                  <span className="line-clamp-1">{opt.label}</span>
+                  <span className="text-sky-200 group-hover:translate-x-0.5 transition-transform">
+                    →
+                  </span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Assistant Launcher Button */}
       <div className="fixed bottom-6 right-6 z-50 flex items-center justify-center">
         <motion.button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => {
+            if (isOpen) {
+              setIsOpen(false);
+            } else {
+              handleDismissNudge();
+              setIsOpen(true);
+            }
+          }}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.92 }}
           className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-white border-2 border-sky-300 shadow-2xl p-1 cursor-pointer flex items-center justify-center group"
@@ -253,7 +366,7 @@ export default function GeminiChatDrawer({ products }: GeminiChatDrawerProps) {
                     </div>
                   </div>
 
-                  {/* Slurrp Farm Visual Product Recommendation Cards */}
+                  {/* Product Recommendation Cards */}
                   {m.recommendedProducts && m.recommendedProducts.length > 0 && (
                     <div className="flex gap-2.5 overflow-x-auto pb-2 pt-1 no-scrollbar pl-8">
                       {m.recommendedProducts.map((prod) => {

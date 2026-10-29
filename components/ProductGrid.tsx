@@ -79,7 +79,14 @@ export default function ProductGrid({ products }: ProductGridProps) {
 
   return (
     <section id="products" className="max-w-7xl mx-auto px-6 py-12 scroll-mt-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+      {/* Header with Smooth Scroll Reveal */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-60px' }}
+        transition={{ duration: 0.65, ease: [0.21, 0.47, 0.32, 0.98] }}
+        className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8"
+      >
         <div>
           <div className="inline-flex items-center gap-2 text-sky-600 font-extrabold text-xs uppercase tracking-widest mb-2">
             <span>🌸 Pure & Safe Essentials</span>
@@ -122,9 +129,16 @@ export default function ProductGrid({ products }: ProductGridProps) {
             <option value="price-desc">Price: High to Low</option>
           </select>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="relative flex items-center gap-2 overflow-x-auto pb-4 no-scrollbar border-b border-slate-100 mb-8">
+      {/* Category Tabs Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="relative flex items-center gap-2 overflow-x-auto pb-4 no-scrollbar border-b border-slate-100 mb-8"
+      >
         {CATEGORIES.map((cat) => {
           const isActive = activeCategory === cat;
           return (
@@ -146,8 +160,9 @@ export default function ProductGrid({ products }: ProductGridProps) {
             </button>
           );
         })}
-      </div>
+      </motion.div>
 
+      {/* Products Grid */}
       {filteredProducts.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -172,7 +187,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           <AnimatePresence>
-            {filteredProducts.map((product) => {
+            {filteredProducts.map((product, idx) => {
               const price = parseFloat(
                 product.priceRange?.minVariantPrice?.amount || '0'
               ).toFixed(0);
@@ -183,11 +198,15 @@ export default function ProductGrid({ products }: ProductGridProps) {
               return (
                 <motion.div
                   layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-50px' }}
+                  transition={{
+                    duration: 0.55,
+                    delay: (idx % 4) * 0.08,
+                    ease: [0.21, 0.47, 0.32, 0.98],
+                  }}
                   whileHover={{ y: -6 }}
-                  transition={{ duration: 0.25 }}
                   key={product.id}
                   className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group relative"
                 >

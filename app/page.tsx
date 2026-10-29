@@ -3,8 +3,10 @@ import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import TrustBadges from '@/components/TrustBadges';
 import ProductGrid from '@/components/ProductGrid';
+import AboutUs from '@/components/AboutUs';
 import DoctorSpotlight from '@/components/DoctorSpotlight';
 import Footer from '@/components/Footer';
+import CartDrawer from '@/components/CartDrawer';
 import GeminiChatDrawer from '@/components/GeminiChatDrawer';
 
 export default async function HomePage() {
@@ -21,8 +23,10 @@ export default async function HomePage() {
       <HeroSection />
       <TrustBadges />
       <ProductGrid products={products} />
+      <AboutUs />
       <DoctorSpotlight />
       <Footer />
+      <CartDrawer />
       <GeminiChatDrawer products={products} />
     </main>
   );
