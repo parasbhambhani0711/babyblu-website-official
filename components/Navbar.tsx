@@ -1,10 +1,19 @@
+'use client';
+
 import Image from 'next/image';
+import { useCart } from '@/app/context/CartContext';
 
-interface NavbarProps {
-  cartCount?: number;
-}
+export default function Navbar() {
+  const { totalItems, openCart } = useCart();
 
-export default function Navbar({ cartCount = 0 }: NavbarProps) {
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <>
       {/* Top Notice Bar */}
@@ -33,17 +42,38 @@ export default function Navbar({ cartCount = 0 }: NavbarProps) {
 
         {/* Navigation Links */}
         <nav className="hidden lg:flex items-center gap-8 font-semibold text-sm text-slate-600">
-          <a href="#products" className="hover:text-sky-600 transition-colors">Catalog</a>
-          <a href="#safety" className="hover:text-sky-600 transition-colors">Safety Standards</a>
-          <a href="#reviews" className="hover:text-sky-600 transition-colors">Parent Reviews</a>
+          <a
+            href="#products"
+            onClick={(e) => handleScroll(e, 'products')}
+            className="hover:text-sky-600 transition-colors"
+          >
+            Catalog
+          </a>
+          <a
+            href="#safety"
+            onClick={(e) => handleScroll(e, 'safety')}
+            className="hover:text-sky-600 transition-colors"
+          >
+            Safety Standards
+          </a>
+          <a
+            href="#reviews"
+            onClick={(e) => handleScroll(e, 'reviews')}
+            className="hover:text-sky-600 transition-colors"
+          >
+            Parent Reviews
+          </a>
         </nav>
 
         {/* Cart Action */}
         <div className="flex items-center gap-3">
-          <button className="relative bg-sky-500 hover:bg-sky-600 text-white font-extrabold px-5 py-2.5 rounded-full text-xs sm:text-sm shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-95 flex items-center gap-2">
+          <button
+            onClick={openCart}
+            className="relative bg-sky-500 hover:bg-sky-600 text-white font-extrabold px-5 py-2.5 rounded-full text-xs sm:text-sm shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-95 flex items-center gap-2"
+          >
             <span>🛒 Cart</span>
-            <span className="bg-white text-sky-600 text-[11px] font-black rounded-full h-5 w-5 flex items-center justify-center">
-              {cartCount}
+            <span className="bg-white text-sky-600 text-[11px] font-black rounded-full h-5 w-5 flex items-center justify-center shadow-xs">
+              {totalItems}
             </span>
           </button>
         </div>

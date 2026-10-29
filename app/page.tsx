@@ -17,7 +17,7 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#FAF9F5] text-slate-800 selection:bg-sky-200 selection:text-sky-900">
-      <Navbar cartCount={0} />
+      <Navbar />
       <HeroSection />
       <TrustBadges />
       <ProductGrid products={products} />
